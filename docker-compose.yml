@@ -26,6 +26,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+      - uploads:/app/uploads
 
 volumes:
   pgdata:
+  uploads:
