@@ -8,3 +8,5 @@ python-multipart>=0.0.9
 pgvector>=0.2.5
 pytest
 httpx
+openai
+pypdf

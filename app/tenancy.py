@@ -1,11 +1,16 @@
 import uuid
-from fastapi import Header, HTTPException
+from fastapi import HTTPException, Security
+from fastapi.security import APIKeyHeader
 
-def get_tenant_id(x_tenant_id: str | None = Header(default=None)) -> uuid.UUID:
+tenant_header = APIKeyHeader(
+    name="X-Tenant-ID",
+    auto_error=False,
+)
+
+def get_tenant_id(x_tenant_id: str = Security(tenant_header)) -> uuid.UUID:
     if not x_tenant_id:
-        raise HTTPException(status_code=400, detail="X-Tenant-ID header is required")
+        raise HTTPException(status_code=400, detail="X-Tenant-ID header required")
     try:
         return uuid.UUID(x_tenant_id)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid X-Tenant-ID header format")
-    
+        raise HTTPException(status_code=400, detail="Invalid X-Tenant-ID")
