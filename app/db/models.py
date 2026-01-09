@@ -119,6 +119,11 @@ class Document(Base):
     chunks: Mapped[list["Chunk"]] = relationship(back_populates="document", cascade="all, delete-orphan")
     acls: Mapped[list["DocumentACL"]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
+    # content integrity / deduplication fields
+    content_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ingest_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_documents_tenant_id_id"),
         Index("ix_documents_tenant", "tenant_id"),
