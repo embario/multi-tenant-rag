@@ -10,7 +10,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 app = FastAPI(title="Multi-Tenant RAG")
 app.include_router(documents_router)
 
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
-

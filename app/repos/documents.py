@@ -26,13 +26,13 @@ def list_for_tenant(db: Session, tenant_id: uuid.UUID):
 
 
 def create_document(
-        db: Session,
-        tenant_id: uuid.UUID,
-        doc_id: uuid.UUID,
-        title: str,
-        storage_path: str,
-        status: DocumentStatus,
-        version: int = 1,
+    db: Session,
+    tenant_id: uuid.UUID,
+    doc_id: uuid.UUID,
+    title: str,
+    storage_path: str,
+    status: DocumentStatus,
+    version: int = 1,
 ) -> Document:
     """Create a new document for a specific tenant."""
     doc = Document(

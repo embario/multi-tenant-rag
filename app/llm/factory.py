@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import os
-from typing import Sequence
 
-from app.llm.app import ChatMessage, LLMClient
+from app.llm.app import LLMClient
 
 
 def get_llm_client() -> LLMClient:

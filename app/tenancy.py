@@ -7,6 +7,7 @@ tenant_header = APIKeyHeader(
     auto_error=False,
 )
 
+
 def get_tenant_id(x_tenant_id: str = Security(tenant_header)) -> uuid.UUID:
     if not x_tenant_id:
         raise HTTPException(status_code=400, detail="X-Tenant-ID header required")

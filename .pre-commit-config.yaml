@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.5         # keep in sync with your desired Ruff version
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: docker-pytest
+        name: docker-compose pytest
+        entry: docker
+        args:
+          - compose
+          - exec
+          - -T
+          - -e
+          - LLM_PROVIDER=stub
+          - -e
+          - EMBEDDER_PROVIDER=stub
+          - -e
+          - DISABLE_EXTERNAL_LLM_CALLS=1
+          - api
+          - pytest
+          - -q
+        language: system
+        pass_filenames: false

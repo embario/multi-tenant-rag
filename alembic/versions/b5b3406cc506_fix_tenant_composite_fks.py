@@ -5,15 +5,14 @@ Revises: 379292e88fcf
 Create Date: 2026-01-08 02:06:53.773843
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'b5b3406cc506'
-down_revision: Union[str, Sequence[str], None] = '379292e88fcf'
+revision: str = "b5b3406cc506"
+down_revision: Union[str, Sequence[str], None] = "379292e88fcf"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -45,7 +44,9 @@ def upgrade() -> None:
     )
 
     # 4) DOCUMENT_ACLS: drop old FK(document_id)->documents(id), add composite FK
-    op.drop_constraint("document_acls_document_id_fkey", "document_acls", type_="foreignkey")
+    op.drop_constraint(
+        "document_acls_document_id_fkey", "document_acls", type_="foreignkey"
+    )
     op.create_foreign_key(
         "fk_docacls_tenant_document",
         "document_acls",
@@ -59,7 +60,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Reverse order
 
-    op.drop_constraint("fk_docacls_tenant_document", "document_acls", type_="foreignkey")
+    op.drop_constraint(
+        "fk_docacls_tenant_document", "document_acls", type_="foreignkey"
+    )
     op.create_foreign_key(
         "document_acls_document_id_fkey",
         "document_acls",

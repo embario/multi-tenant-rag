@@ -10,5 +10,4 @@ class ChatMessage:
 
 
 class LLMClient(Protocol):
-    def chat(self, messages: Sequence[ChatMessage]) -> str:
-        ...
+    def chat(self, messages: Sequence[ChatMessage]) -> str: ...

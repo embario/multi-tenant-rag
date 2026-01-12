@@ -26,7 +26,9 @@ def test_document_isolation(client, tenant_ids):
     assert r2.status_code == 404
 
 
-def test_ingest_creates_chunks_with_stub_embedder(client, db_session, monkeypatch, tmp_path, tenant_ids):
+def test_ingest_creates_chunks_with_stub_embedder(
+    client, db_session, monkeypatch, tmp_path, tenant_ids
+):
     tenant_id = tenant_ids["tenant_a"]
 
     # Ensure environment uses stub embedder and local uploads path for CI/testing.
@@ -55,11 +57,7 @@ def test_ingest_creates_chunks_with_stub_embedder(client, db_session, monkeypatc
     assert ingest_resp.json()["chunks_created"] > 0
 
     # Verify chunks were persisted for this document.
-    chunks = (
-        db_session.query(Chunk)
-        .filter(Chunk.document_id == doc_id)
-        .all()
-    )
+    chunks = db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
     assert chunks, "Expected chunks to exist after ingest with stub embedder"
 
 
@@ -129,12 +127,14 @@ def test_ingest_missing_document_returns_404(client, tenant_ids):
 def test_get_document_missing_returns_404(client, tenant_ids):
     resp = client.get(
         f"/documents/{uuid.uuid4()}",
-        headers={"X-Tenant-ID": str(tenant_ids["tenant_a"])}
+        headers={"X-Tenant-ID": str(tenant_ids["tenant_a"])},
     )
     assert resp.status_code == 404
 
 
-def test_create_document_sanitizes_filename_and_writes_file(client, monkeypatch, tmp_path, tenant_ids):
+def test_create_document_sanitizes_filename_and_writes_file(
+    client, monkeypatch, tmp_path, tenant_ids
+):
     monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
     resp = client.post(
         "/documents",
@@ -150,7 +150,9 @@ def test_create_document_sanitizes_filename_and_writes_file(client, monkeypatch,
     assert stored_file.exists()
 
 
-def test_ingest_document_without_storage_path_returns_404(client, db_session, tenant_ids):
+def test_ingest_document_without_storage_path_returns_404(
+    client, db_session, tenant_ids
+):
     tenant_id = tenant_ids["tenant_a"]
     doc = Document(
         id=uuid.uuid4(),
@@ -170,5 +172,3 @@ def test_ingest_document_without_storage_path_returns_404(client, db_session, te
     )
     assert resp.status_code == 404
     assert resp.json()["detail"] == "Document has no storage_path"
-
-

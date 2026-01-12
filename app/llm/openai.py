@@ -11,10 +11,13 @@ class OpenAIChat(LLMClient):
 
         # Hard guard: never allow this in CI when disabled.
         if os.getenv("DISABLE_EXTERNAL_LLM_CALLS") == "1":
-            raise RuntimeError("External LLM calls are disabled (DISABLE_EXTERNAL_LLM_CALLS=1).")
+            raise RuntimeError(
+                "External LLM calls are disabled (DISABLE_EXTERNAL_LLM_CALLS=1)."
+            )
 
         # Import inside to avoid dependency + accidental init in CI.
         from openai import OpenAI  # type: ignore
+
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY is not set")
