@@ -43,6 +43,7 @@ jobs:
             echo "$key=$value" >> "$GITHUB_ENV"
           done < .env.ci
           echo "DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/test_rag" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: |
