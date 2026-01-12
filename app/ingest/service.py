@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session
 from app.db.models import Document, DocumentStatus
 from app.ingest.extract import extract_text
 from app.ingest.chunking import chunk_text
-from app.ingest.embedder_openai import OpenAIEmbedder, batched
+from app.ingest.embedder import get_embedder, batched
 from app.repos import chunks as chunks_repo
 
 log = logging.getLogger("ingest")
+
 
 def ingest_document(
     db: Session,
@@ -28,23 +29,37 @@ def ingest_document(
         .one_or_none()
     )
     if not doc:
-        log.warning("document_not_found tenant_id=%s document_id=%s", tenant_id, document_id)
+        log.warning(
+            "document_not_found tenant_id=%s document_id=%s", tenant_id, document_id
+        )
         raise ValueError("Document not found")
 
     if not doc.storage_path:
-        log.warning("missing_storage_path tenant_id=%s document_id=%s", tenant_id, document_id)
+        log.warning(
+            "missing_storage_path tenant_id=%s document_id=%s", tenant_id, document_id
+        )
         raise ValueError("Document has no storage_path")
 
     log.info(
         "ingest_start tenant_id=%s document_id=%s version=%s storage_path=%s status=%s",
-        tenant_id, document_id, doc.version, doc.storage_path, doc.status,
+        tenant_id,
+        document_id,
+        doc.version,
+        doc.storage_path,
+        doc.status,
     )
 
     # status transition
     prev = doc.status
     doc.status = DocumentStatus.INGESTING
     db.commit()
-    log.info("status_transition tenant_id=%s document_id=%s %s->%s", tenant_id, document_id, prev, doc.status)
+    log.info(
+        "status_transition tenant_id=%s document_id=%s %s->%s",
+        tenant_id,
+        document_id,
+        prev,
+        doc.status,
+    )
 
     try:
         # Extract
@@ -52,7 +67,10 @@ def ingest_document(
         text = extract_text(doc.storage_path)
         log.info(
             "extract_done tenant_id=%s document_id=%s chars=%s elapsed_ms=%s",
-            tenant_id, document_id, len(text), int((time.perf_counter() - t_extract) * 1000),
+            tenant_id,
+            document_id,
+            len(text),
+            int((time.perf_counter() - t_extract) * 1000),
         )
 
         # Chunk
@@ -60,14 +78,17 @@ def ingest_document(
         chunks = chunk_text(text)
         log.info(
             "chunk_done tenant_id=%s document_id=%s chunks=%s elapsed_ms=%s",
-            tenant_id, document_id, len(chunks), int((time.perf_counter() - t_chunk) * 1000),
+            tenant_id,
+            document_id,
+            len(chunks),
+            int((time.perf_counter() - t_chunk) * 1000),
         )
 
         if not chunks:
             raise ValueError("No text extracted / no chunks produced")
 
-        # Embed (batched)
-        embedder = OpenAIEmbedder()
+        # Embed (batched) - embedder chosen by environment (EMBEDDER_PROVIDER)
+        embedder = get_embedder()
         embeddings: list[list[float]] = []
         total = len(chunks)
         done = 0
@@ -81,12 +102,21 @@ def ingest_document(
             done += len(batch)
             log.info(
                 "embed_batch_done tenant_id=%s document_id=%s batch=%s batch_size=%s progress=%s/%s elapsed_ms=%s",
-                tenant_id, document_id, i, len(batch), done, total, int((time.perf_counter() - t_batch) * 1000),
+                tenant_id,
+                document_id,
+                i,
+                len(batch),
+                done,
+                total,
+                int((time.perf_counter() - t_batch) * 1000),
             )
 
         log.info(
             "embed_done tenant_id=%s document_id=%s embeddings=%s elapsed_ms=%s",
-            tenant_id, document_id, len(embeddings), int((time.perf_counter() - t_embed_all) * 1000),
+            tenant_id,
+            document_id,
+            len(embeddings),
+            int((time.perf_counter() - t_embed_all) * 1000),
         )
 
         # Write chunks
@@ -101,7 +131,10 @@ def ingest_document(
         )
         log.info(
             "chunks_written tenant_id=%s document_id=%s created=%s elapsed_ms=%s",
-            tenant_id, document_id, created, int((time.perf_counter() - t_write) * 1000),
+            tenant_id,
+            document_id,
+            created,
+            int((time.perf_counter() - t_write) * 1000),
         )
 
         doc.status = DocumentStatus.READY
@@ -109,7 +142,10 @@ def ingest_document(
 
         log.info(
             "ingest_success tenant_id=%s document_id=%s chunks=%s total_elapsed_ms=%s",
-            tenant_id, document_id, created, int((time.perf_counter() - t0) * 1000),
+            tenant_id,
+            document_id,
+            created,
+            int((time.perf_counter() - t0) * 1000),
         )
         return created
 
@@ -118,6 +154,9 @@ def ingest_document(
         db.commit()
         log.exception(
             "ingest_failed tenant_id=%s document_id=%s total_elapsed_ms=%s err=%r",
-            tenant_id, document_id, int((time.perf_counter() - t0) * 1000), e,
+            tenant_id,
+            document_id,
+            int((time.perf_counter() - t0) * 1000),
+            e,
         )
         raise

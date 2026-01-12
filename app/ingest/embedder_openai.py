@@ -7,6 +7,7 @@ from openai import OpenAI
 
 EMBED_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
+
 class OpenAIEmbedder:
     def __init__(self) -> None:
         api_key = os.getenv("OPENAI_API_KEY")

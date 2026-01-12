@@ -2,6 +2,7 @@ from pathlib import Path
 import contextlib
 import io
 
+
 def extract_text(storage_path: str) -> str:
     p = Path(storage_path)
     suffix = p.suffix.lower()

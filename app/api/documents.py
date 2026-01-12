@@ -11,13 +11,14 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas import DocumentCreateResponse
 from app.db.deps import get_db
-from app.db.models import Document, DocumentStatus, Tenant
+from app.db.models import DocumentStatus, Tenant
 from app.repos import documents as document_repo
 from app.ingest.service import ingest_document
 
 log = logging.getLogger("api.documents")
 
-router = APIRouter(prefix='/documents', tags=['documents'])
+router = APIRouter(prefix="/documents", tags=["documents"])
+
 
 def _safe_filename(original: str) -> str:
     # keep it simple; prevent path traversal
@@ -82,7 +83,8 @@ def create_document(
         status=doc.status,
         version=doc.version,
         storage_path=doc.storage_path,
-)
+    )
+
 
 @router.post("/{doc_id}/ingest")
 def ingest_doc(
@@ -93,9 +95,18 @@ def ingest_doc(
     log.info("ingest_endpoint_called tenant_id=%s document_id=%s", tenant_id, doc_id)
     try:
         n = ingest_document(db, tenant_id=tenant_id, document_id=doc_id)
-        log.info("ingest_endpoint_ok tenant_id=%s document_id=%s chunks_created=%s", tenant_id, doc_id, n)
+        log.info(
+            "ingest_endpoint_ok tenant_id=%s document_id=%s chunks_created=%s",
+            tenant_id,
+            doc_id,
+            n,
+        )
         return {"document_id": str(doc_id), "chunks_created": n}
     except ValueError as e:
-        log.warning("ingest_endpoint_value_error tenant_id=%s document_id=%s err=%s", tenant_id, doc_id, str(e))
+        log.warning(
+            "ingest_endpoint_value_error tenant_id=%s document_id=%s err=%s",
+            tenant_id,
+            doc_id,
+            str(e),
+        )
         raise HTTPException(status_code=404, detail=str(e))
-

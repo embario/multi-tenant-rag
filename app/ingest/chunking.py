@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 def chunk_text(text: str, *, chunk_size: int = 1200, overlap: int = 200) -> list[str]:
     # normalize whitespace
     text = " ".join(text.split())
