@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Document, DocumentStatus
 from app.ingest.extract import extract_text
 from app.ingest.chunking import chunk_text
-from app.ingest.embedder_openai import OpenAIEmbedder, batched
+from app.ingest.embedder import get_embedder, batched
 from app.repos import chunks as chunks_repo
 
 log = logging.getLogger("ingest")
@@ -66,8 +66,8 @@ def ingest_document(
         if not chunks:
             raise ValueError("No text extracted / no chunks produced")
 
-        # Embed (batched)
-        embedder = OpenAIEmbedder()
+        # Embed (batched) - embedder chosen by environment (EMBEDDER_PROVIDER)
+        embedder = get_embedder()
         embeddings: list[list[float]] = []
         total = len(chunks)
         done = 0
