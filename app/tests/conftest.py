@@ -72,3 +72,11 @@ def tenant_ids(engine):
         session.close()
 
     return tenants
+
+
+@pytest.fixture(autouse=True)
+def upload_dir(tmp_path, monkeypatch):
+    path = tmp_path / "uploads"
+    path.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("UPLOAD_DIR", str(path))
+    return path

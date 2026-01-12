@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 import uuid
 from app.db.models import Chunk, Document, DocumentStatus
 
@@ -27,16 +29,13 @@ def test_document_isolation(client, tenant_ids):
 
 
 def test_ingest_creates_chunks_with_stub_embedder(
-    client, db_session, monkeypatch, tmp_path, tenant_ids
+    client, db_session, monkeypatch, tenant_ids
 ):
     tenant_id = tenant_ids["tenant_a"]
 
     # Ensure environment uses stub embedder and local uploads path for CI/testing.
     monkeypatch.setenv("EMBEDDER_PROVIDER", "stub")
     monkeypatch.setenv("DISABLE_EXTERNAL_LLM_CALLS", "1")
-    upload_dir = tmp_path / "uploads"
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    monkeypatch.setenv("UPLOAD_DIR", str(upload_dir))
 
     # Upload a document (simple text payload).
     create_resp = client.post(
@@ -61,9 +60,8 @@ def test_ingest_creates_chunks_with_stub_embedder(
     assert chunks, "Expected chunks to exist after ingest with stub embedder"
 
 
-def test_get_document_success(client, monkeypatch, tmp_path, tenant_ids):
+def test_get_document_success(client, tenant_ids):
     tenant_id = tenant_ids["tenant_a"]
-    monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
 
     create_resp = client.post(
         "/documents",
@@ -82,11 +80,11 @@ def test_get_document_success(client, monkeypatch, tmp_path, tenant_ids):
     payload = get_resp.json()
     assert payload["id"] == doc_id
     assert payload["title"] == "readme"
-    assert payload["storage_path"].startswith(str(tmp_path))
+    storage_root = Path(os.environ["UPLOAD_DIR"])
+    assert payload["storage_path"].startswith(str(storage_root))
 
 
-def test_create_document_missing_tenant_returns_404(client, tmp_path, monkeypatch):
-    monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
+def test_create_document_missing_tenant_returns_404(client):
     orphan_tenant = uuid.uuid4()
     resp = client.post(
         "/documents",
@@ -98,8 +96,7 @@ def test_create_document_missing_tenant_returns_404(client, tmp_path, monkeypatc
     assert resp.json()["detail"] == "Tenant not found"
 
 
-def test_create_document_empty_file_rejected(client, tmp_path, monkeypatch, tenant_ids):
-    monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
+def test_create_document_empty_file_rejected(client, tenant_ids):
     tenant_id = tenant_ids["tenant_a"]
 
     resp = client.post(
@@ -132,10 +129,7 @@ def test_get_document_missing_returns_404(client, tenant_ids):
     assert resp.status_code == 404
 
 
-def test_create_document_sanitizes_filename_and_writes_file(
-    client, monkeypatch, tmp_path, tenant_ids
-):
-    monkeypatch.setenv("UPLOAD_DIR", str(tmp_path))
+def test_create_document_sanitizes_filename_and_writes_file(client, tenant_ids):
     resp = client.post(
         "/documents",
         headers={"X-Tenant-ID": str(tenant_ids["tenant_a"])},
@@ -145,8 +139,9 @@ def test_create_document_sanitizes_filename_and_writes_file(
     assert resp.status_code == 200
     payload = resp.json()
     storage_path = payload["storage_path"]
-    assert storage_path.startswith(str(tmp_path))
-    stored_file = tmp_path / storage_path.split("/")[-1]
+    storage_root = Path(os.environ["UPLOAD_DIR"])
+    assert storage_path.startswith(str(storage_root))
+    stored_file = Path(storage_path)
     assert stored_file.exists()
 
 
